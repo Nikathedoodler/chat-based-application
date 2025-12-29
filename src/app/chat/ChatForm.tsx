@@ -46,10 +46,8 @@ export default function ChatForm({ initialMessages = [] }: ChatFormProps) {
     }
   }, []);
 
-  // Auto-scroll to bottom when messages change - scroll main window
   useEffect(() => {
     if (messagesEndRef.current) {
-      // Use requestAnimationFrame for smooth scrolling
       requestAnimationFrame(() => {
         messagesEndRef.current?.scrollIntoView({
           behavior: "smooth",
@@ -293,38 +291,101 @@ export default function ChatForm({ initialMessages = [] }: ChatFormProps) {
             <div className="h-36" ref={messagesEndRef} />
           </>
         ) : (
-          <div className="flex items-center justify-center min-h-[60vh] text-muted-foreground">
-            <p>No messages yet. Start a conversation!</p>
+          <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl font-semibold">
+                Welcome to Roman History Chat
+              </h2>
+              <p className="text-muted-foreground">
+                Ask me anything about ancient Rome, its emperors, battles,
+                culture, and more!
+              </p>
+            </div>
+
+            {/* Prompt Suggestions */}
+            <div className="w-full max-w-2xl space-y-2">
+              <p className="text-sm text-muted-foreground text-center mb-3">
+                Try asking about:
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {[
+                  "Tell me about Julius Caesar",
+                  "What was the Colosseum used for?",
+                  "Explain the fall of the Roman Empire",
+                  "Who were the Roman gods?",
+                  "Describe the Punic Wars",
+                  "What was life like in ancient Rome?",
+                ].map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    onClick={() => setInput(suggestion)}
+                    className="text-left p-3 rounded-lg border bg-background hover:bg-accent hover:text-accent-foreground transition-colors text-sm"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Input field - positioned under suggestions when chat is empty */}
+            <div className="w-full max-w-2xl mt-6">
+              <div className="bg-background rounded-2xl shadow-lg border p-4">
+                <form onSubmit={handleSubmit}>
+                  <div className="flex gap-2">
+                    <Input
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      placeholder="Ask about Roman history..."
+                      required
+                      disabled={isLoading}
+                      className="flex-1 focus-visible:ring-0 focus-visible:ring-offset-0"
+                    />
+                    <Button type="submit" disabled={isLoading}>
+                      {isLoading ? "Sending..." : "Send"}
+                    </Button>
+                  </div>
+                  {error && (
+                    <Alert variant="destructive" className="mt-4">
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  )}
+                </form>
+              </div>
+            </div>
           </div>
         )}
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 z-20 pb-4 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="bg-background rounded-2xl shadow-lg border p-4">
-            <form onSubmit={handleSubmit}>
-              <div className="flex gap-2">
-                <Input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Type a message..."
-                  required
-                  disabled={isLoading}
-                  className="flex-1"
-                />
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading ? "Sending..." : "Send"}
-                </Button>
-              </div>
-              {error && (
-                <Alert variant="destructive" className="mt-4">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-            </form>
+      {/* Input field - fixed at bottom when messages exist */}
+      {messages.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-20 pb-4 px-4">
+          <div className="max-w-7xl mx-auto">
+            <div className="bg-background rounded-2xl shadow-lg border p-4">
+              <form onSubmit={handleSubmit}>
+                <div className="flex gap-2">
+                  <Input
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="Type a message..."
+                    required
+                    disabled={isLoading}
+                    className="flex-1 focus-visible:ring-0 focus-visible:ring-offset-0"
+                  />
+                  <Button type="submit" disabled={isLoading}>
+                    {isLoading ? "Sending..." : "Send"}
+                  </Button>
+                </div>
+                {error && (
+                  <Alert variant="destructive" className="mt-4">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+              </form>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </>
   );
 }
