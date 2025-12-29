@@ -1,11 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useAutoScroll } from "@/hooks/useAutoScroll";
+import { useEffect, useState, useRef } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { cn } from "@/lib/utils";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
+  id?: string;
 }
 
 interface ChatFormProps {
@@ -15,14 +20,20 @@ interface ChatFormProps {
 export default function ChatForm({ initialMessages = [] }: ChatFormProps) {
   const [nickname, setNickname] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [messages, setMessages] = useState<Message[]>(
+    initialMessages.map((msg, idx) => ({
+      ...msg,
+      id: `msg-${idx}-${Date.now()}`,
+    }))
+  );
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pulsingMessageIndex, setPulsingMessageIndex] = useState<number | null>(
     null
   );
-  const messagesEndRef = useAutoScroll(messages);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -33,23 +44,34 @@ export default function ChatForm({ initialMessages = [] }: ChatFormProps) {
     if (storedNickname) {
       document.cookie = `chatNickname=${storedNickname}; path=/; max-age=31536000`;
     }
-
-    if (initialMessages.length > 0) {
-      setMessages(initialMessages);
-    }
   }, []);
+
+  // Auto-scroll to bottom when messages change - similar to AI SDK's built-in scroll
+  useEffect(() => {
+    if (messagesEndRef.current && messagesContainerRef.current) {
+      // Use requestAnimationFrame for smooth scrolling
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      });
+    }
+  }, [messages.length, isLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
 
-    const userMessage: Message = { role: "user", content: input.trim() };
+    const userMessage: Message = {
+      role: "user",
+      content: input.trim(),
+      id: `user-${Date.now()}`,
+    };
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setInput("");
     setError(null);
     setIsLoading(true);
 
+    // Save user message to storage
     if (nickname) {
       await fetch("/api/save-message", {
         method: "POST",
@@ -62,7 +84,11 @@ export default function ChatForm({ initialMessages = [] }: ChatFormProps) {
       });
     }
 
-    const assistantMessage: Message = { role: "assistant", content: "" };
+    const assistantMessage: Message = {
+      role: "assistant",
+      content: "",
+      id: `assistant-${Date.now()}`,
+    };
     setMessages([...newMessages, assistantMessage]);
 
     try {
@@ -95,17 +121,19 @@ export default function ChatForm({ initialMessages = [] }: ChatFormProps) {
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
-
         const lines = chunk.split("\n");
 
         for (const line of lines) {
           if (line.trim() === "") continue;
-
           const text = line.startsWith("0:") ? line.slice(2) : line;
           accumulatedContent += text;
           setMessages([
             ...newMessages,
-            { role: "assistant", content: accumulatedContent },
+            {
+              role: "assistant",
+              content: accumulatedContent,
+              id: assistantMessage.id,
+            },
           ]);
         }
       }
@@ -127,8 +155,6 @@ export default function ChatForm({ initialMessages = [] }: ChatFormProps) {
 
       const finalMessageIndex = newMessages.length;
       setPulsingMessageIndex(finalMessageIndex);
-
-      // TODO: Consider making pulse duration configurable
       setTimeout(() => {
         setPulsingMessageIndex(null);
       }, 3000);
@@ -143,209 +169,127 @@ export default function ChatForm({ initialMessages = [] }: ChatFormProps) {
   // Show loading state during hydration
   if (!mounted) {
     return (
-      <div style={{ padding: "24px", background: "#fff", borderRadius: "8px" }}>
-        <p>Loading...</p>
-      </div>
+      <Card>
+        <CardContent className="p-6">
+          <p>Loading...</p>
+        </CardContent>
+      </Card>
     );
   }
 
   if (!nickname) {
     return (
-      <div
-        style={{
-          padding: "24px",
-          background: "#fff",
-          borderRadius: "8px",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-        }}
-      >
-        <h2
-          style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "16px" }}
-        >
-          Enter Your Nickname
-        </h2>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            const formData = new FormData(e.currentTarget);
-            const newNickname = formData.get("nickname");
-            if (typeof newNickname === "string" && newNickname.trim()) {
-              const trimmedNickname = newNickname.trim();
-              localStorage.setItem("chatNickname", trimmedNickname);
-              document.cookie = `chatNickname=${trimmedNickname}; path=/; max-age=31536000`;
-              setNickname(trimmedNickname);
-            }
-          }}
-        >
-          <input
-            name="nickname"
-            placeholder="Enter your nickname"
-            required
-            style={{
-              width: "100%",
-              padding: "8px 16px",
-              border: "1px solid #ccc",
-              borderRadius: "8px",
-              marginBottom: "16px",
+      <Card>
+        <CardHeader>
+          <CardTitle>Enter Your Nickname</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              const newNickname = formData.get("nickname");
+              if (typeof newNickname === "string" && newNickname.trim()) {
+                const trimmedNickname = newNickname.trim();
+                localStorage.setItem("chatNickname", trimmedNickname);
+                document.cookie = `chatNickname=${trimmedNickname}; path=/; max-age=31536000`;
+                setNickname(trimmedNickname);
+              }
             }}
-            autoFocus
-          />
-          <button
-            type="submit"
-            style={{
-              width: "100%",
-              padding: "8px 16px",
-              background: "#2563eb",
-              color: "white",
-              borderRadius: "8px",
-              border: "none",
-              cursor: "pointer",
-            }}
+            className="space-y-4"
           >
-            Join Chat
-          </button>
-        </form>
-      </div>
+            <Input
+              name="nickname"
+              placeholder="Enter your nickname"
+              required
+              autoFocus
+            />
+            <Button type="submit" className="w-full">
+              Join Chat
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div
-      style={{
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        padding: "24px",
-        background: "#fff",
-        borderRadius: "8px",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-      }}
-    >
-      <div style={{ marginBottom: "16px", flexShrink: 0 }}>
-        <p style={{ fontSize: "14px", color: "#666" }}>
-          Logged in as: <span style={{ fontWeight: "600" }}>{nickname}</span>
-        </p>
-      </div>
-
-      {/* Messages display */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          marginBottom: "24px",
-          minHeight: 0,
-        }}
-      >
-        {messages.length > 0 ? (
-          <>
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                style={{
-                  display: "flex",
-                  justifyContent:
-                    message.role === "user" ? "flex-end" : "flex-start",
-                  marginBottom: "16px",
-                }}
-              >
-                <div
-                  style={{
-                    maxWidth: "70%",
-                    background: message.role === "user" ? "#2563eb" : "#e5e7eb",
-                    color: message.role === "user" ? "white" : "#111",
-                    borderRadius: "8px",
-                    padding: "8px 16px",
-                    animation:
-                      message.role === "assistant" &&
-                      ((isLoading && index === messages.length - 1) ||
-                        pulsingMessageIndex === index)
-                        ? "pulse 2s ease-in-out infinite"
-                        : "none",
-                  }}
-                >
-                  {message.content ||
-                    (isLoading && index === messages.length - 1 ? "..." : "")}
-                  {message.role === "assistant" &&
-                    isLoading &&
-                    index === messages.length - 1 && (
-                      <span
-                        style={{
-                          display: "inline-block",
-                          width: "8px",
-                          height: "8px",
-                          background: "#666",
-                          borderRadius: "50%",
-                          marginLeft: "4px",
-                          animation: "blink 1s infinite",
-                        }}
-                      />
-                    )}
-                </div>
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </>
-        ) : (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              height: "100%",
-              color: "#999",
-            }}
-          >
-            <p>No messages yet. Start a conversation!</p>
-          </div>
-        )}
-      </div>
-
-      {/* Chat form */}
-      <form onSubmit={handleSubmit} style={{ flexShrink: 0 }}>
-        <div style={{ display: "flex", gap: "8px" }}>
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type a message..."
-            required
-            disabled={isLoading}
-            style={{
-              flex: 1,
-              padding: "8px 16px",
-              border: "1px solid #ccc",
-              borderRadius: "8px",
-            }}
-          />
-          <button
-            type="submit"
-            disabled={isLoading}
-            style={{
-              padding: "8px 24px",
-              background: isLoading ? "#9ca3af" : "#2563eb",
-              color: "white",
-              borderRadius: "8px",
-              border: "none",
-              cursor: isLoading ? "not-allowed" : "pointer",
-            }}
-          >
-            {isLoading ? "Sending..." : "Send"}
-          </button>
+    <Card className="h-full flex flex-col">
+      <CardContent className="flex-1 flex flex-col p-6">
+        <div className="mb-4 flex-shrink-0">
+          <p className="text-sm text-muted-foreground">
+            Logged in as: <span className="font-semibold">{nickname}</span>
+          </p>
         </div>
-        {error && (
-          <div
-            style={{
-              marginTop: "16px",
-              padding: "16px",
-              background: "#fee",
-              border: "1px solid #fcc",
-              borderRadius: "8px",
-              color: "#c00",
-            }}
-          >
-            <span>{error}</span>
+
+        {/* Messages display */}
+        <div
+          ref={messagesContainerRef}
+          className="flex-1 overflow-y-auto mb-6 min-h-0"
+        >
+          {messages.length > 0 ? (
+            <>
+              {messages.map((message, index) => (
+                <div
+                  key={message.id || index}
+                  className={cn(
+                    "flex mb-4",
+                    message.role === "user" ? "justify-end" : "justify-start"
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "max-w-[70%] rounded-lg px-4 py-2",
+                      message.role === "user"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground",
+                      message.role === "assistant" &&
+                        ((isLoading && index === messages.length - 1) ||
+                          pulsingMessageIndex === index) &&
+                        "animate-pulse-custom"
+                    )}
+                  >
+                    {message.content ||
+                      (isLoading && index === messages.length - 1 ? "..." : "")}
+                    {message.role === "assistant" &&
+                      isLoading &&
+                      index === messages.length - 1 && (
+                        <span className="inline-block w-2 h-2 bg-muted-foreground/50 rounded-full ml-1 animate-blink" />
+                      )}
+                  </div>
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </>
+          ) : (
+            <div className="flex items-center justify-center h-full text-muted-foreground">
+              <p>No messages yet. Start a conversation!</p>
+            </div>
+          )}
+        </div>
+
+        {/* Chat form */}
+        <form onSubmit={handleSubmit} className="flex-shrink-0">
+          <div className="flex gap-2">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Type a message..."
+              required
+              disabled={isLoading}
+              className="flex-1"
+            />
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? "Sending..." : "Send"}
+            </Button>
           </div>
-        )}
-      </form>
-    </div>
+          {error && (
+            <Alert variant="destructive" className="mt-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+        </form>
+      </CardContent>
+    </Card>
   );
 }

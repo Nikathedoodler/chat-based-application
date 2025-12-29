@@ -71,7 +71,7 @@ When you ask non-Roman history stuff, it should say something like "I can only a
 - React 19
 - Vercel AI SDK for streaming
 - OpenAI API
-- Tailwind CSS + DaisyUI (configured but using inline styles mostly)
+- Tailwind CSS + shadcn/ui components
 - File-based storage for chat history
 
 ## Project Structure

@@ -1,63 +1,29 @@
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+
 export default function Home() {
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-      }}
-    >
-      <div
-        style={{
-          background: "white",
-          borderRadius: "16px",
-          padding: "48px",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
-          maxWidth: "500px",
-          width: "100%",
-          textAlign: "center",
-        }}
-      >
-        <h1
-          style={{
-            fontSize: "32px",
-            fontWeight: "bold",
-            marginBottom: "16px",
-            color: "#1a1a1a",
-          }}
-        >
-          Chat Application
-        </h1>
-        <p
-          style={{
-            fontSize: "18px",
-            color: "#666",
-            marginBottom: "32px",
-            lineHeight: "1.6",
-          }}
-        >
-          Connect to chat with an AI assistant specialized in Roman history.
-          Enter your nickname and start chatting!
-        </p>
-        <a
-          href="/chat"
-          style={{
-            display: "inline-block",
-            padding: "12px 32px",
-            background: "#2563eb",
-            color: "white",
-            borderRadius: "8px",
-            textDecoration: "none",
-            fontSize: "16px",
-            fontWeight: "600",
-            cursor: "pointer",
-          }}
-        >
-          Go to Chat
-        </a>
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600">
+      <Card className="max-w-md w-full mx-4 shadow-2xl">
+        <CardHeader className="text-center">
+          <CardTitle className="text-3xl">Chat Application</CardTitle>
+          <CardDescription className="text-lg mt-4">
+            Connect to chat with an AI assistant specialized in Roman history.
+            Enter your nickname and start chatting!
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="text-center">
+          <Button asChild size="lg">
+            <a href="/chat">Go to Chat</a>
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

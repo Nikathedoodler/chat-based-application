@@ -16,36 +16,12 @@ export default async function ChatPage() {
     }));
   }
   return (
-    <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          maxWidth: "1200px",
-          width: "100%",
-          margin: "0 auto",
-          padding: "16px",
-        }}
-      >
-        <h1
-          style={{
-            fontSize: "24px",
-            fontWeight: "bold",
-            marginBottom: "16px",
-            textAlign: "center",
-          }}
-        >
+    <div className="h-screen flex flex-col">
+      <div className="flex-1 flex flex-col max-w-7xl w-full mx-auto p-4">
+        <h1 className="text-2xl font-bold mb-4 text-center">
           Chat Application
         </h1>
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            minHeight: 0,
-          }}
-        >
+        <div className="flex-1 flex flex-col min-h-0">
           <ChatForm initialMessages={initialMessages} />
         </div>
       </div>
