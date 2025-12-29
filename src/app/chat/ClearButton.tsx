@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,22 +15,60 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-export default function ClearButton() {
+interface ClearButtonProps {
+  hasMessages?: boolean;
+}
+
+export default function ClearButton({
+  hasMessages: initialHasMessages = false,
+}: ClearButtonProps) {
   const [nickname, setNickname] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const [open, setOpen] = useState(false);
+  const [hasMessages, setHasMessages] = useState(initialHasMessages);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
     const storedNickname = localStorage.getItem("chatNickname");
     setNickname(storedNickname);
+
+    // Listen for nickname changes
+    const handleNicknameChange = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setNickname(customEvent.detail);
+      } else {
+        const newNickname = localStorage.getItem("chatNickname");
+        setNickname(newNickname);
+      }
+    };
+
+    // Listen for messages changes
+    const handleMessagesChange = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail !== undefined) {
+        setHasMessages(customEvent.detail);
+      }
+    };
+
+    window.addEventListener("nicknameChanged", handleNicknameChange);
+    window.addEventListener("storage", handleNicknameChange);
+    window.addEventListener("messagesChanged", handleMessagesChange);
+
+    return () => {
+      window.removeEventListener("nicknameChanged", handleNicknameChange);
+      window.removeEventListener("storage", handleNicknameChange);
+      window.removeEventListener("messagesChanged", handleMessagesChange);
+    };
   }, []);
 
   const handleClear = async () => {
     if (!nickname || isClearing) return;
 
     setIsClearing(true);
+    setError(null);
     try {
       const response = await fetch("/api/clear-messages", {
         method: "POST",
@@ -46,18 +85,22 @@ export default function ClearButton() {
     } catch (err) {
       console.error("Error clearing messages:", err);
       setIsClearing(false);
-      alert("Failed to clear messages. Please try again.");
+      setError("Failed to clear messages. Please try again.");
     }
   };
 
-  if (!mounted || !nickname) {
+  if (!mounted || !nickname || !hasMessages) {
     return null;
   }
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
-        <Button variant="outline" size="sm" className="ml-4">
+        <Button
+          variant="outline"
+          size="sm"
+          className="bg-red-500 text-white hover:bg-red-600 border-red-500"
+        >
           Clear Chat
         </Button>
       </AlertDialogTrigger>
@@ -69,6 +112,11 @@ export default function ClearButton() {
             undone and will permanently delete your chat history.
           </AlertDialogDescription>
         </AlertDialogHeader>
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isClearing}>Cancel</AlertDialogCancel>
           <AlertDialogAction

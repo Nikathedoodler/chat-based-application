@@ -57,6 +57,15 @@ export default function ChatForm({ initialMessages = [] }: ChatFormProps) {
     }
   }, [messages.length, isLoading]);
 
+  // Dispatch event when messages change to update ClearButton
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent("messagesChanged", {
+        detail: messages.length > 0,
+      })
+    );
+  }, [messages.length]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
