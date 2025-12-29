@@ -24,19 +24,22 @@ export async function sendMessage(presState: any, formData: FormData) {
 
   try {
     const stream = await openai.chat.completions.create({
-        model: 'gpt-40-mini',
-        message: [{role: "user", content: message}],
-        stream: true
-    })
+      model: 'gpt-4o-mini',
+      messages: [{ role: "user", content: messageText }],
+      stream: true
+    });
 
-    let apiResponse = ''
+    let apiResponse = '';
     for await (const chunk of stream) {
-        if (chunk.choices[0]?.delta?.content) {
-            apiResonse += chunk.choices[0].delta.content
-        }
+      if (chunk.choices[0]?.delta?.content) {
+        apiResponse += chunk.choices[0].delta.content;
+      }
     }
-  } 
 
-
-  return { success: true };
+    revalidatePath('/chat');
+    return { success: true, response: apiResponse };
+  } catch (error) {
+    console.error('Error calling OpenAI:', error);
+    return { error: 'Failed to get response from AI' };
+  }
 }
