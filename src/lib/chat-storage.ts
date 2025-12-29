@@ -110,3 +110,25 @@ export async function saveMessages(
     console.error("Error saving messages:", error);
   }
 }
+
+// Clear chat history for a user
+export async function clearChatHistory(nickname: string): Promise<void> {
+  try {
+    await ensureStorageDir();
+    const filePath = getHistoryPath(nickname);
+
+    if (existsSync(filePath)) {
+      // Create empty history
+      const history: ChatHistory = {
+        nickname,
+        messages: [],
+        lastUpdated: Date.now(),
+      };
+
+      await writeFile(filePath, JSON.stringify(history, null, 2), "utf-8");
+    }
+  } catch (error) {
+    console.error("Error clearing chat history:", error);
+    throw error;
+  }
+}

@@ -1,5 +1,6 @@
 import ChatForm from "./ChatForm";
 import UserDisplay from "./UserDisplay";
+import ClearButton from "./ClearButton";
 import { loadChatHistory } from "@/lib/chat-storage";
 import { cookies } from "next/headers";
 
@@ -23,10 +24,11 @@ export default async function ChatPage() {
         <div className="max-w-7xl mx-auto">
           <div className="p-4">
             <h1 className="text-2xl font-bold text-center mb-2">
-              Chat Application
+              Chat Application - Roman History
             </h1>
-            <div className="flex justify-center">
+            <div className="flex justify-center items-center">
               <UserDisplay />
+              <ClearButton />
             </div>
           </div>
         </div>
