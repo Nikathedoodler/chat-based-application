@@ -303,29 +303,31 @@ export default function ChatForm({ initialMessages = [] }: ChatFormProps) {
         )}
       </div>
 
-      {/* Chat form - fixed at bottom of viewport */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background border-t z-20">
-        <div className="max-w-7xl mx-auto p-4">
-          <form onSubmit={handleSubmit}>
-            <div className="flex gap-2">
-              <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Type a message..."
-                required
-                disabled={isLoading}
-                className="flex-1"
-              />
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Sending..." : "Send"}
-              </Button>
-            </div>
-            {error && (
-              <Alert variant="destructive" className="mt-4">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-          </form>
+      {/* Chat form - floating at bottom of viewport */}
+      <div className="fixed bottom-0 left-0 right-0 z-20 pb-4 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-background rounded-2xl shadow-lg border p-4">
+            <form onSubmit={handleSubmit}>
+              <div className="flex gap-2">
+                <Input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Type a message..."
+                  required
+                  disabled={isLoading}
+                  className="flex-1"
+                />
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? "Sending..." : "Send"}
+                </Button>
+              </div>
+              {error && (
+                <Alert variant="destructive" className="mt-4">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+            </form>
+          </div>
         </div>
       </div>
     </>
