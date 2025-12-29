@@ -33,7 +33,7 @@ export default function ChatForm({ initialMessages = [] }: ChatFormProps) {
     null
   );
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const lastScrollTimeRef = useRef<number>(0);
 
   useEffect(() => {
     setMounted(true);
@@ -46,12 +46,15 @@ export default function ChatForm({ initialMessages = [] }: ChatFormProps) {
     }
   }, []);
 
-  // Auto-scroll to bottom when messages change - similar to AI SDK's built-in scroll
+  // Auto-scroll to bottom when messages change - scroll main window
   useEffect(() => {
-    if (messagesEndRef.current && messagesContainerRef.current) {
+    if (messagesEndRef.current) {
       // Use requestAnimationFrame for smooth scrolling
       requestAnimationFrame(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        messagesEndRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "end",
+        });
       });
     }
   }, [messages.length, isLoading]);
@@ -70,6 +73,14 @@ export default function ChatForm({ initialMessages = [] }: ChatFormProps) {
     setInput("");
     setError(null);
     setIsLoading(true);
+
+    // Scroll immediately when user message is added
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
+    }, 100);
 
     // Save user message to storage
     if (nickname) {
@@ -90,6 +101,14 @@ export default function ChatForm({ initialMessages = [] }: ChatFormProps) {
       id: `assistant-${Date.now()}`,
     };
     setMessages([...newMessages, assistantMessage]);
+
+    // Scroll immediately when assistant loader appears
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
+    }, 100);
 
     try {
       const response = await fetch("/api/chat", {
@@ -135,8 +154,27 @@ export default function ChatForm({ initialMessages = [] }: ChatFormProps) {
               id: assistantMessage.id,
             },
           ]);
+          // Scroll during streaming to keep up with new content (throttled)
+          const now = Date.now();
+          if (now - lastScrollTimeRef.current > 100) {
+            lastScrollTimeRef.current = now;
+            requestAnimationFrame(() => {
+              messagesEndRef.current?.scrollIntoView({
+                behavior: "smooth",
+                block: "end",
+              });
+            });
+          }
         }
       }
+
+      // Final scroll to ensure complete message is visible
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "end",
+        });
+      }, 100);
 
       setIsLoading(false);
 
@@ -220,76 +258,76 @@ export default function ChatForm({ initialMessages = [] }: ChatFormProps) {
   }
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardContent className="flex-1 flex flex-col p-6">
-        {/* Messages display */}
-        <div
-          ref={messagesContainerRef}
-          className="flex-1 overflow-y-auto mb-6 min-h-0"
-        >
-          {messages.length > 0 ? (
-            <>
-              {messages.map((message, index) => (
+    <>
+      {/* Messages display - scrolls with main window */}
+      <div className="p-4">
+        {messages.length > 0 ? (
+          <>
+            {messages.map((message, index) => (
+              <div
+                key={message.id || index}
+                className={cn(
+                  "flex mb-4",
+                  message.role === "user" ? "justify-end" : "justify-start"
+                )}
+              >
                 <div
-                  key={message.id || index}
                   className={cn(
-                    "flex mb-4",
-                    message.role === "user" ? "justify-end" : "justify-start"
+                    "max-w-[70%] rounded-lg px-4 py-2",
+                    message.role === "user"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground",
+                    message.role === "assistant" &&
+                      ((isLoading && index === messages.length - 1) ||
+                        pulsingMessageIndex === index) &&
+                      "animate-pulse-custom"
                   )}
                 >
-                  <div
-                    className={cn(
-                      "max-w-[70%] rounded-lg px-4 py-2",
-                      message.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground",
-                      message.role === "assistant" &&
-                        ((isLoading && index === messages.length - 1) ||
-                          pulsingMessageIndex === index) &&
-                        "animate-pulse-custom"
+                  {message.content ||
+                    (isLoading && index === messages.length - 1 ? "..." : "")}
+                  {message.role === "assistant" &&
+                    isLoading &&
+                    index === messages.length - 1 && (
+                      <span className="inline-block w-2 h-2 bg-muted-foreground/50 rounded-full ml-1 animate-blink" />
                     )}
-                  >
-                    {message.content ||
-                      (isLoading && index === messages.length - 1 ? "..." : "")}
-                    {message.role === "assistant" &&
-                      isLoading &&
-                      index === messages.length - 1 && (
-                        <span className="inline-block w-2 h-2 bg-muted-foreground/50 rounded-full ml-1 animate-blink" />
-                      )}
-                  </div>
                 </div>
-              ))}
-              <div ref={messagesEndRef} />
-            </>
-          ) : (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-              <p>No messages yet. Start a conversation!</p>
-            </div>
-          )}
-        </div>
-
-        {/* Chat form */}
-        <form onSubmit={handleSubmit} className="flex-shrink-0">
-          <div className="flex gap-2">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Type a message..."
-              required
-              disabled={isLoading}
-              className="flex-1"
-            />
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Sending..." : "Send"}
-            </Button>
+              </div>
+            ))}
+            {/* Spacer to ensure last message is visible above fixed input */}
+            <div className="h-36" ref={messagesEndRef} />
+          </>
+        ) : (
+          <div className="flex items-center justify-center min-h-[60vh] text-muted-foreground">
+            <p>No messages yet. Start a conversation!</p>
           </div>
-          {error && (
-            <Alert variant="destructive" className="mt-4">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-        </form>
-      </CardContent>
-    </Card>
+        )}
+      </div>
+
+      {/* Chat form - fixed at bottom of viewport */}
+      <div className="fixed bottom-0 left-0 right-0 bg-background border-t z-20">
+        <div className="max-w-7xl mx-auto p-4">
+          <form onSubmit={handleSubmit}>
+            <div className="flex gap-2">
+              <Input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Type a message..."
+                required
+                disabled={isLoading}
+                className="flex-1"
+              />
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? "Sending..." : "Send"}
+              </Button>
+            </div>
+            {error && (
+              <Alert variant="destructive" className="mt-4">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+          </form>
+        </div>
+      </div>
+    </>
   );
 }

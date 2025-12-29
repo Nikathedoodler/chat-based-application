@@ -33,8 +33,8 @@ export default async function ChatPage() {
       </div>
 
       {/* Scrollable content area with padding for fixed header */}
-      <div className="pt-32 pb-4 flex-1 flex flex-col min-h-0">
-        <div className="flex-1 flex flex-col max-w-7xl w-full mx-auto px-4">
+      <div className="pt-32 pb-0">
+        <div className="max-w-7xl mx-auto">
           <ChatForm initialMessages={initialMessages} />
         </div>
       </div>
