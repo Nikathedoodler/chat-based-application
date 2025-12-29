@@ -1,13 +1,53 @@
 import ChatForm from "./ChatForm";
+import { loadChatHistory } from "@/lib/chat-storage";
+import { cookies } from "next/headers";
 
 export default async function chatPage() {
+  const cookieStore = await cookies();
+  const nickname = cookieStore.get("chatNickname")?.value;
+
+  let initialMessages: Array<{ role: "user" | "assistant"; content: string }> =
+    [];
+  if (nickname) {
+    const history = await loadChatHistory(nickname);
+    initialMessages = history.map((msg) => ({
+      role: msg.role,
+      content: msg.content,
+    }));
+  }
   return (
-    <div className="min-h-screen">
-      <div className="container mx-auto p-4 max-w-4xl">
-        <h1 className="text-3xl font-bold mb-6 text-center">
+    <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          maxWidth: "1200px",
+          width: "100%",
+          margin: "0 auto",
+          padding: "16px",
+        }}
+      >
+        <h1
+          style={{
+            fontSize: "24px",
+            fontWeight: "bold",
+            marginBottom: "16px",
+            textAlign: "center",
+          }}
+        >
           Chat Application
         </h1>
-        <ChatForm />
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            minHeight: 0,
+          }}
+        >
+          <ChatForm initialMessages={initialMessages} />
+        </div>
       </div>
     </div>
   );
