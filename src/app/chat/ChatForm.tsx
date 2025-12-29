@@ -194,6 +194,12 @@ export default function ChatForm({ initialMessages = [] }: ChatFormProps) {
                 localStorage.setItem("chatNickname", trimmedNickname);
                 document.cookie = `chatNickname=${trimmedNickname}; path=/; max-age=31536000`;
                 setNickname(trimmedNickname);
+                // Dispatch custom event to update UserDisplay
+                window.dispatchEvent(
+                  new CustomEvent("nicknameChanged", {
+                    detail: trimmedNickname,
+                  })
+                );
               }
             }}
             className="space-y-4"
@@ -216,12 +222,6 @@ export default function ChatForm({ initialMessages = [] }: ChatFormProps) {
   return (
     <Card className="h-full flex flex-col">
       <CardContent className="flex-1 flex flex-col p-6">
-        <div className="mb-4 flex-shrink-0">
-          <p className="text-sm text-muted-foreground">
-            Logged in as: <span className="font-semibold">{nickname}</span>
-          </p>
-        </div>
-
         {/* Messages display */}
         <div
           ref={messagesContainerRef}
