@@ -19,7 +19,6 @@ export default async function ChatPage() {
   }
   return (
     <div className="h-screen flex flex-col">
-      {/* Fixed header */}
       <div className="fixed top-0 left-0 right-0 z-10 bg-background border-b">
         <div className="max-w-7xl mx-auto">
           <div className="p-4">
@@ -34,7 +33,6 @@ export default async function ChatPage() {
         </div>
       </div>
 
-      {/* Scrollable content area with padding for fixed header */}
       <div className="pt-32 pb-0">
         <div className="max-w-7xl mx-auto">
           <ChatForm initialMessages={initialMessages} />

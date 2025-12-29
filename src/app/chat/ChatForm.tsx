@@ -82,7 +82,6 @@ export default function ChatForm({ initialMessages = [] }: ChatFormProps) {
       });
     }, 100);
 
-    // Save user message to storage
     if (nickname) {
       await fetch("/api/save-message", {
         method: "POST",
@@ -178,7 +177,6 @@ export default function ChatForm({ initialMessages = [] }: ChatFormProps) {
 
       setIsLoading(false);
 
-      // Save assistant response to storage
       if (nickname && accumulatedContent) {
         await fetch("/api/save-message", {
           method: "POST",
@@ -204,7 +202,6 @@ export default function ChatForm({ initialMessages = [] }: ChatFormProps) {
     }
   };
 
-  // Show loading state during hydration
   if (!mounted) {
     return (
       <Card>
@@ -293,7 +290,6 @@ export default function ChatForm({ initialMessages = [] }: ChatFormProps) {
                 </div>
               </div>
             ))}
-            {/* Spacer to ensure last message is visible above fixed input */}
             <div className="h-36" ref={messagesEndRef} />
           </>
         ) : (
@@ -303,7 +299,6 @@ export default function ChatForm({ initialMessages = [] }: ChatFormProps) {
         )}
       </div>
 
-      {/* Chat form - floating at bottom of viewport */}
       <div className="fixed bottom-0 left-0 right-0 z-20 pb-4 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="bg-background rounded-2xl shadow-lg border p-4">

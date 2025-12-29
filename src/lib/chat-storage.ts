@@ -17,20 +17,17 @@ interface ChatHistory {
   lastUpdated: number;
 }
 
-// Ensure storage directory exists
 async function ensureStorageDir() {
   if (!existsSync(STORAGE_DIR)) {
     await mkdir(STORAGE_DIR, { recursive: true });
   }
 }
 
-// Get file path for a user's chat history
 function getHistoryPath(nickname: string): string {
   const sanitized = sanitizeNickname(nickname);
   return join(STORAGE_DIR, `${sanitized}.json`);
 }
 
-// Load chat history for a user
 export async function loadChatHistory(nickname: string): Promise<Message[]> {
   try {
     await ensureStorageDir();
@@ -59,7 +56,6 @@ export async function saveMessage(
     await ensureStorageDir();
     const filePath = getHistoryPath(nickname);
 
-    // Load existing history
     let history: ChatHistory = {
       nickname,
       messages: [],
@@ -71,7 +67,6 @@ export async function saveMessage(
       history = JSON.parse(fileContent);
     }
 
-    // Add new message
     history.messages.push({
       role,
       content,
@@ -80,7 +75,6 @@ export async function saveMessage(
 
     history.lastUpdated = Date.now();
 
-    // Save back to file
     await writeFile(filePath, JSON.stringify(history, null, 2), "utf-8");
   } catch (error) {
     console.error("Error saving message:", error);
@@ -118,7 +112,6 @@ export async function clearChatHistory(nickname: string): Promise<void> {
     const filePath = getHistoryPath(nickname);
 
     if (existsSync(filePath)) {
-      // Create empty history
       const history: ChatHistory = {
         nickname,
         messages: [],

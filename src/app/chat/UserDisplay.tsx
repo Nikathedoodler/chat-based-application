@@ -11,7 +11,6 @@ export default function UserDisplay() {
     const storedNickname = localStorage.getItem("chatNickname");
     setNickname(storedNickname);
 
-    // Listen for nickname changes
     const handleStorageChange = () => {
       const newNickname = localStorage.getItem("chatNickname");
       setNickname(newNickname);

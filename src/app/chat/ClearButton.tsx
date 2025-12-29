@@ -42,7 +42,6 @@ export default function ClearButton() {
       }
 
       setOpen(false);
-      // Use window.location.reload() for a full page refresh to reload server-side data
       window.location.reload();
     } catch (err) {
       console.error("Error clearing messages:", err);
