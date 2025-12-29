@@ -2,7 +2,7 @@ import ChatForm from "./ChatForm";
 import { loadChatHistory } from "@/lib/chat-storage";
 import { cookies } from "next/headers";
 
-export default async function chatPage() {
+export default async function ChatPage() {
   const cookieStore = await cookies();
   const nickname = cookieStore.get("chatNickname")?.value;
 

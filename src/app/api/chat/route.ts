@@ -16,24 +16,9 @@ export async function POST(req: Request) {
       );
     }
 
-    // System prompt to restrict LLM to Roman history only
-    const systemPrompt = `You are a helpful assistant specialized exclusively in Roman history. 
-Your role is to answer questions about:
-- Ancient Rome, the Roman Empire, Roman Republic
-- Roman emperors, senators, generals, and historical figures
-- Roman culture, society, military, architecture, law, and politics
-- Roman conquests, battles, and wars
-- Roman mythology and religion
-- The fall of the Roman Empire
-- Any topic related to ancient Roman civilization
+    const systemPrompt = `You are a helpful assistant specialized in Roman history. Answer questions about ancient Rome, the Roman Empire, Roman Republic, emperors, culture, military, architecture, law, politics, battles, mythology, and the fall of the empire.
 
-For any question that is NOT about Roman history, you must politely decline and explain that you can only answer questions about Roman history. Be friendly and helpful, but firm in your limitation.
-
-Example responses for non-Roman history questions:
-- "I'm sorry, but I can only answer questions about Roman history. Could you ask me something about ancient Rome instead?"
-- "I specialize exclusively in Roman history. Please ask me about the Roman Empire, Roman culture, or any aspect of ancient Roman civilization."
-
-Always be polite, helpful, and enthusiastic when answering questions about Roman history.`;
+For questions not about Roman history, politely decline and explain you can only answer questions about Roman history.`;
 
     const messagesWithSystem = [
       { role: "system", content: systemPrompt },

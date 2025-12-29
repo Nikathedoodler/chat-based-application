@@ -27,8 +27,9 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error("Error saving message:", error);
+    // Fail silently for now - messages will still work without persistence
     return new Response(
-      JSON.stringify({ error: "Internal server error" }),
+      JSON.stringify({ error: "Failed to save message" }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }

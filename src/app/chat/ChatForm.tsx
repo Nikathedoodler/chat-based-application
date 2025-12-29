@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
+import { useAutoScroll } from "@/hooks/useAutoScroll";
 
 interface Message {
   role: "user" | "assistant";
@@ -21,7 +22,7 @@ export default function ChatForm({ initialMessages = [] }: ChatFormProps) {
   const [pulsingMessageIndex, setPulsingMessageIndex] = useState<number | null>(
     null
   );
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useAutoScroll(messages);
 
   useEffect(() => {
     setMounted(true);
@@ -37,13 +38,6 @@ export default function ChatForm({ initialMessages = [] }: ChatFormProps) {
       setMessages(initialMessages);
     }
   }, []);
-
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,20 +101,12 @@ export default function ChatForm({ initialMessages = [] }: ChatFormProps) {
         for (const line of lines) {
           if (line.trim() === "") continue;
 
-          if (line.startsWith("0:")) {
-            const text = line.slice(2);
-            accumulatedContent += text;
-            setMessages([
-              ...newMessages,
-              { role: "assistant", content: accumulatedContent },
-            ]);
-          } else {
-            accumulatedContent += line;
-            setMessages([
-              ...newMessages,
-              { role: "assistant", content: accumulatedContent },
-            ]);
-          }
+          const text = line.startsWith("0:") ? line.slice(2) : line;
+          accumulatedContent += text;
+          setMessages([
+            ...newMessages,
+            { role: "assistant", content: accumulatedContent },
+          ]);
         }
       }
 
@@ -142,6 +128,7 @@ export default function ChatForm({ initialMessages = [] }: ChatFormProps) {
       const finalMessageIndex = newMessages.length;
       setPulsingMessageIndex(finalMessageIndex);
 
+      // TODO: Consider making pulse duration configurable
       setTimeout(() => {
         setPulsingMessageIndex(null);
       }, 3000);

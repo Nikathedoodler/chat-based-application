@@ -1,6 +1,7 @@
 import { readFile, writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
+import { sanitizeNickname } from "./utils";
 
 const STORAGE_DIR = join(process.cwd(), ".chat-history");
 
@@ -25,19 +26,16 @@ async function ensureStorageDir() {
 
 // Get file path for a user's chat history
 function getHistoryPath(nickname: string): string {
-  // Sanitize nickname for filename
-  const sanitized = nickname.replace(/[^a-zA-Z0-9-_]/g, "_");
+  const sanitized = sanitizeNickname(nickname);
   return join(STORAGE_DIR, `${sanitized}.json`);
 }
 
 // Load chat history for a user
-export async function loadChatHistory(
-  nickname: string
-): Promise<Message[]> {
+export async function loadChatHistory(nickname: string): Promise<Message[]> {
   try {
     await ensureStorageDir();
     const filePath = getHistoryPath(nickname);
-    
+
     if (!existsSync(filePath)) {
       return [];
     }
@@ -112,4 +110,3 @@ export async function saveMessages(
     console.error("Error saving messages:", error);
   }
 }
-
